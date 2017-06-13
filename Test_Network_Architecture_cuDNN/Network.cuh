@@ -24,6 +24,8 @@ private:
 	void* workSpace;
 
 	cudnnHandle_t cudnnHandle;
+	int* filterShapePtr;
+	int filterCount;
 	vector<float*> feature_vec;
 	vector<float*> conv_vec;
 	vector<float*> bias_vec;
@@ -58,8 +60,10 @@ public:
 		printf("Network Destroyer \n");
 	}
 
-	void LoadWeight(char* path, int *filterShape, int filterCount)
+	void LoadWeight(char* path, int *filterShape, int filter_count)
 	{		
+		filterShapePtr = filterShape;
+		filterCount = filter_count;
 		variable_length = 0;
 		for (int i = 0; i < filterCount/FILTER_DIM; i++)
 		{
@@ -75,18 +79,18 @@ public:
 		printf("read %d\n", size);
 		fclose(inf);		
 
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			printf("%d,%.3f\n", i, src[i]);
 		}
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			int offset = variable_length - 1 - i;
 			printf("%d,%.3ff\n", offset, src[offset]);
 		}
 	}
 
-	int CreateTensorDescriptor(char *NetLayer,int layerCount, int *filterShape,int filterCount, int inputH, int inputW, int inputC){
+	void CreateTensorDescriptor(char *NetLayer,int layerCount, int inputH, int inputW, int inputC){
 
 		int convolution_index = 0;
 		printf("%s Feature Map shapes\n", CHAR_INFO);
@@ -94,17 +98,19 @@ public:
 		printf("input (%d, %d, %d)\n", inputH, inputW, inputC);
 		vector<int> width_vec;
 		vector<int> height_vec;
-
+		width_vec.push_back(inputW);
+		height_vec.push_back(inputH);
 		cudnnTensorDescriptor_t inTensorDesc;
 		checkCUDA(cudnnCreateTensorDescriptor(&inTensorDesc));
 		checkCUDA(cudnnSetTensor4dDescriptor(inTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, inputC, inputH, inputW));
 		tensorDescriptor_vec.push_back(inTensorDesc);
+
 		for (int i = 0; i < layerCount; i++)
 		{
 			char layer = NetLayer[i];
 			if (layer == CONV)
 			{				
-				inputC = filterShape[convolution_index*FILTER_DIM + 3];
+				inputC = filterShapePtr[convolution_index*FILTER_DIM + 3];
 				convolution_index++;
 			}
 			else if (layer == BN)
@@ -114,21 +120,55 @@ public:
 			else if (layer == POOL){
 				inputW /= 2;
 				inputH /= 2;
+				width_vec.push_back(inputW);
+				height_vec.push_back(inputH);
 			}
 			else if (layer == UN_POOL){
-				inputW *= 2;
-				inputH *= 2;
+
+				width_vec.pop_back();
+				height_vec.pop_back();
+				inputW = width_vec[width_vec.size() - 1];
+				inputH = height_vec[height_vec.size() - 1];
 			}
 
 			printf("%d %c (%d, %d, %d)\n", i, layer, inputH, inputW, inputC);
+			cudnnTensorDescriptor_t tensorDesc;
+			checkCUDA(cudnnCreateTensorDescriptor(&tensorDesc));
+			checkCUDA(cudnnSetTensor4dDescriptor(tensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, inputC, inputH, inputW));
+			tensorDescriptor_vec.push_back(tensorDesc);
 		}
-
-		return 0;	
+		for (int i = 0; i < tensorDescriptor_vec.size(); i++)
+		{
+			PrintDescriptor(i,tensorDescriptor_vec[i]);
+		}
 	}
-	void Init()
+
+	void InitFilterDesc()
+	{
+		for (int i = 0; i < filterCount / FILTER_DIM; i++)
+		{
+			cudnnFilterDescriptor_t filterDesc;
+			checkCUDA(cudnnCreateFilterDescriptor(&filterDesc));
+			int offset = i * FILTER_DIM;
+			int h = filterShapePtr[offset + 0];
+			int w = filterShapePtr[offset + 1];
+			int c = filterShapePtr[offset + 2];
+			int k = filterShapePtr[offset + 3];
+			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
+			filterDescriptor_vec.push_back(filterDesc);
+		}
+		for (int i = 0; i < filterDescriptor_vec.size(); i++)
+		{
+			int size = GetFilterSize(filterDescriptor_vec[i]);
+			printf("[%d] size: %d", i, size);
+		}
+	}
+	void Init(int in_h, int in_w, int in_c)
 	{
 		printf("Network Init() \n");
 		checkCUDA(cudnnCreate(&cudnnHandle));
+		
+		/*
 		checkCUDA(cudnnCreateConvolutionDescriptor(&convDesc));
 		checkCUDA(cudnnCreatePoolingDescriptor(&maxPoolDesc));
 		checkCUDA(cudnnCreatePoolingDescriptor(&avgPoolDesc));
@@ -147,7 +187,7 @@ public:
 
 		cudnnTensorDescriptor_t inTensorDesc;
 		checkCUDA(cudnnCreateTensorDescriptor(&inTensorDesc));
-//		checkCUDA(cudnnSetTensor4dDescriptor(inTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, shape_in.c, shape_in.h, shape_in.w));
+		checkCUDA(cudnnSetTensor4dDescriptor(inTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, shape_in.c, shape_in.h, shape_in.w));
 		tensorDescriptor_vec.push_back(inTensorDesc);
 
 		for (int i = 0; i < CONV_COUNT; i++)
@@ -185,7 +225,7 @@ public:
 			feature_vec.push_back(feature);
 		}
 
-		/*checkCUDA(cudnnSetTensor4dDescriptor(GetTensorDescriptor(-1), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, 2, shape_in.h, shape_in.w));
+		checkCUDA(cudnnSetTensor4dDescriptor(GetTensorDescriptor(-1), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, 2, shape_in.h, shape_in.w));
 		checkCUDA(cudnnSetTensor4dDescriptor(GetTensorDescriptor(-2), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, 2, shape_in.h / 2, shape_in.w / 2));
 		checkCUDA(cudnnSetTensor4dDescriptor(GetTensorDescriptor(-3), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, 3, shape_in.h / 4, shape_in.w / 4));
 		checkCUDA(cudnnSetTensor4dDescriptor(GetTensorDescriptor(-4), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape_in.n, 3, shape_in.h / 8, shape_in.w / 8));

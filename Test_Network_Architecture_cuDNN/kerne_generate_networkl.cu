@@ -157,7 +157,8 @@ int main(int argc, char* argv[])
 	char * variablePath = "../weights/weight.dat";		 
 	
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
-	//network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), &filterShape[0][0], sizeof(filterShape) / sizeof(int),in_h, in_w, in_c);
+	network.InitFilterDesc();
+	network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), in_h, in_w, in_c);   
 
 	return 0;
 }

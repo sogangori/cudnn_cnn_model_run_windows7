@@ -116,7 +116,7 @@ void PrintTensor(char* title, float* tensor, cudnnTensorDescriptor_t descriptor)
 	print(title, printBuffer, n, c, h, w);
 }
 
-void PrintDescriptor(char* title, cudnnTensorDescriptor_t descriptor)
+void PrintDescriptor(int index, cudnnTensorDescriptor_t descriptor)
 {
 	cudnnDataType_t                    dataType; // image data type
 	int                                n;        // number of inputs (batch size)
@@ -128,7 +128,7 @@ void PrintDescriptor(char* title, cudnnTensorDescriptor_t descriptor)
 	int                                hStride;
 	int                                wStride;
 	checkCUDA(cudnnGetTensor4dDescriptor(descriptor, &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
-	printf("PrintDescriptor(%s) %d x %d x %d x %d \n",title, n, c, h, w);
+	printf("PrintDescriptor(%d) %d x %d x %d x %d \n", index, n, c, h, w);
 }
 
 int GetTensorSize(cudnnTensorDescriptor_t descriptor)
