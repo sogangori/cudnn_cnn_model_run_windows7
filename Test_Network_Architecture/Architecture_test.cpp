@@ -1,11 +1,19 @@
 #include <stdio.h>
-
 #include "constant.h"
 
-const int FILTER_DIM = 4;
-
-char NetLayer[] = { 'c', 'n', 'p', 'c', 'n', 'u', 'a', 'c', 'n', 'c', 'n', 'c' };
-int filterShape[][FILTER_DIM] = { { 3, 3, 3, 6 }, { 3, 3, 6, 12 }, { 3, 3, 12, 6 }, { 3, 3, 6, 3 }, { 3, 3, 3, 2 } };
+char NetLayer[] = { 
+	CONV, BN, POOL, 
+	CONV, BN, UN_POOL, 
+	ADD, CONV, BN, 
+	CONV, BN, 
+	CONV, BN
+};
+int filterShape[][FILTER_DIM] = {
+	{ 3, 3, 3, 6 }, { 1, 1, 1, 6 }, { 1, 1, 1, 6 },
+	{ 3, 3, 6, 12 }, { 1, 1, 1, 12 }, { 1, 1, 1, 12 },
+	{ 3, 3, 12, 6 }, { 1, 1, 1, 6 }, { 1, 1, 1, 6 },
+	{ 3, 3, 6, 3 }, { 1, 1, 1, 3 }, { 1, 1, 1, 3 },
+	{ 3, 3, 3, 2 }, { 1, 1, 1, 2 }, { 1, 1, 1, 2 } };
 
 int CheckArchitecture(int inputH,int inputW,int inputC)
 {	
@@ -16,7 +24,7 @@ int CheckArchitecture(int inputH,int inputW,int inputC)
 	for (int i = 0; i < sizeof(NetLayer); i++)
 	{
 		char layer = NetLayer[i];
-		if (layer == 'c')
+		if (layer == CONV)
 		{
 			int filterDepth = filterShape[convolution_index][2];
 			if (inputC != filterDepth)
@@ -28,11 +36,22 @@ int CheckArchitecture(int inputH,int inputW,int inputC)
 			outC = filterShape[convolution_index][3];
 			convolution_index++;
 		}
-		else if (layer == 'p'){
+		else if (layer == BN)
+		{
+			int filterCount = filterShape[convolution_index][3];
+			if (inputC != filterCount)
+			{
+				printf("%s data channel size (%d) is not Equal with Filter channel (%d)\n",
+					CHAR_ERROR, inputC, filterCount);
+				return -1;
+			}
+			convolution_index += 2;
+		}
+		else if (layer == POOL){
 			outW /= 2;
 			outH /= 2;
 		}
-		else if (layer == 'u'){
+		else if (layer == UN_POOL){
 			outW *= 2;
 			outH *= 2;
 		}
