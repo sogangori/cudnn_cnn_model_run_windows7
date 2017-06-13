@@ -56,16 +56,10 @@ int main(int argc, char* argv[])
 	int filter_len = variable_read.ReadAll();
 	printf("filter_len :%d \n", filter_len);
 	
-	for (int i = 0; i < 10; i++)
-	{
-		printf("%.2f ", variable_read.src[i]);
-	}
-	printf("\n");
-
-
 	if (filter_len != filter_count_in_network){
 		printf("[ERROR] filter_len(%d) != filter_count_in_network(%d) \n", filter_len, filter_count_in_network);
-	}
+	}else 
+		printf("[OK] filter_len(%d) == filter_count_in_network(%d) \n", filter_len, filter_count_in_network);
 	return 0;
 }
 
