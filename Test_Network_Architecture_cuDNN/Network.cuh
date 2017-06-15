@@ -21,6 +21,7 @@ private:
 	float *variables_d;
 	float *outData_d, *buffer_d, *buffer2_d;
 	float *inData_normal;
+	float *feature0, *feature1, *feature2;
 	uchar* final_d;
 	void* workSpace;
 	int tdInx = 0;
@@ -208,6 +209,11 @@ public:
 		checkCUDA(cudaMalloc((void**)&buffer2_d, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMalloc((void**)&final_d, GetTensorSize(td_vec[0])*sizeof(uchar)));
 
+		checkCUDA(cudaMalloc((void**)&feature0, GetTensorSize(td_vec[0])*sizeof(float)));
+		checkCUDA(cudaMalloc((void**)&feature1, GetTensorSize(td_vec[0])*sizeof(float)));
+		checkCUDA(cudaMalloc((void**)&feature2, GetTensorSize(td_vec[0])*sizeof(float)));
+		
+
 		checkCUDA(cudaMemset(inData_d, 0, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMemset(inData_normal, 0, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMemset(outData_d, 0, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
@@ -273,9 +279,10 @@ public:
 		Log("Acti");
 	}
 
-	void Pool(float* src, float* dst)
+	void Pool()
 	{
-		checkCUDA(cudnnPoolingForward(cudnnHandle, maxPoolDesc, &alpha, td_vec[tdInx], src, &zero, td_vec[tdInx + 1], dst));
+		
+		checkCUDA(cudnnPoolingForward(cudnnHandle, maxPoolDesc, &alpha, td_vec[tdInx], buffer2_d, &zero, td_vec[tdInx + 1], buffer_d));
 		tdInx++;
 		Log("Pool");
 	}
@@ -301,78 +308,82 @@ public:
 		
 		Nornalize(inData_d, inData_normal, td_vec[tdInx]);
 		 
-		//5. CBN R
+		//0. CBN R
 		ConvBN(inData_normal, buffer2_d);
 		Activate();
 		
-		//6. P CBN R
-		Pool(buffer2_d, buffer_d);
+		//1. P CBN R
+		Pool();
 		ConvBN(buffer_d, buffer2_d);
 		Activate();
+		checkCUDA(cudaMemcpy(feature0, buffer2_d, GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));	
 		
-		//7. P CBN R
-		Pool(buffer2_d, buffer_d);
+		//2. P CBN R
+		Pool();
 		ConvBN(buffer_d, buffer2_d);
 		Activate();
+		checkCUDA(cudaMemcpy(feature1, buffer2_d, GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
 		
-		//8. P CBN R
-		Pool(buffer2_d, buffer_d);
+		//3. P CBN R
+		Pool();
+		ConvBN(buffer_d, buffer2_d);
+		Activate();
+		checkCUDA(cudaMemcpy(feature2, buffer2_d, GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
+
+		//4. P CBN R
+		Pool();
 		ConvBN(buffer_d, buffer2_d);
 		Activate();
 
-		//9. P CBN R
-		Pool(buffer2_d, buffer_d);
+		//5. PCBN R
+		Pool();
 		ConvBN(buffer_d, buffer2_d);
 		Activate();
 
-		//10. PCBN R
-		Pool(buffer2_d, buffer_d);
-		ConvBN(buffer_d, buffer2_d);
-		Activate();
-
-		//11. C BN
+		//6. C BN
 		ConvBN(buffer2_d, buffer_d);
-
-		//12. U A R C BN R
+		//7. U A R C BN R
 		UnPool(buffer_d, buffer2_d);
-		Add(buffer_d, buffer2_d);//TODO
+		Add(feature2, buffer2_d);
 		Activate();
 		ConvBN(buffer2_d, buffer_d);
 		Activate();
 
-		//13 C BN
+		//8 C BN
 		ConvBN(buffer2_d, buffer_d);
 
-		//14 U A R C B
+		//9 U A R C B
+		UnPool(buffer_d, buffer2_d);
+		Add(feature1, buffer2_d);
+		Activate();
+		ConvBN(buffer2_d, buffer_d);
+
+		//10 U A R C B
+		UnPool(buffer_d, buffer2_d);
+		Add(feature0, buffer2_d);
+		Activate();
+		ConvBN(buffer2_d, buffer_d);
+
+		//11 U A R 
 		UnPool(buffer_d, buffer2_d);
 		Add(buffer_d, buffer2_d);
 		Activate();
-		ConvBN(buffer2_d, buffer_d);
 
-		//15 U A R C B
-		UnPool(buffer_d, buffer2_d);
-		Add(buffer_d, buffer2_d);
-		Activate();
-		ConvBN(buffer2_d, buffer_d);
-
-		//16 U A R 
-		UnPool(buffer_d, buffer2_d);
-		Add(buffer_d, buffer2_d);
-		Activate();
-
-		//17 C B R
+		//12 C B R
 		ConvBN(buffer2_d, buffer_d);
 		Activate();
-		//18 C B R
-		ConvBN(buffer2_d, buffer2_d);//?
+		//13 C B R
+		checkCUDA(cudaMemcpy(buffer_d, buffer2_d, GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
+		ConvBN(buffer_d, buffer2_d);
 		Activate();
-		//19 C B R
+		//14 C B R
+		checkCUDA(cudaMemcpy(buffer_d, buffer2_d, GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
 		ConvBN(buffer2_d, buffer_d);
 		Activate();
-		//20 U
-		UnPool(buffer_d, buffer2_d);
+		//15 U
+		UnPool(buffer2_d, buffer_d);
 		
-		Nornalize(buffer2_d, outData_d, td_vec[td_vec.size() - 1]);
+		Nornalize(buffer_d, outData_d, td_vec[td_vec.size() - 1]);
 
 		if (td_vec.size() != tdInx + 1)
 		{

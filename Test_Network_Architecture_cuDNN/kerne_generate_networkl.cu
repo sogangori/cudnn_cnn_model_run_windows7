@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "../weights/weight.dat";		 
-	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_01.dat";
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_05.dat";
 
 	int mask_len = in_w * in_h;
 	int input_len = in_c * mask_len;
@@ -176,14 +176,7 @@ int main(int argc, char* argv[])
 	fclose(inf);
 	printf("Read %d\n", t);
 	if (t != input_len)  printf("[WARN] read count (%d) != (%d) \n", t, input_len);
-
-	double sum = 0;
-	for (int i = 0; i < input_len/10; i++)
-	{
-		sum += input[i];
-	}
-	printf("sum %f \n", sum);
-	
+		
 	cudaMemcpy(input_d, input + mask_len, input_len * sizeof(float), cudaMemcpyHostToDevice);
 
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
@@ -192,7 +185,6 @@ int main(int argc, char* argv[])
 	network.Init(in_h, in_w, in_c);
 	network.CopyInput(input_d);
 	network.inference();
-	//network.TestCopyInput();
 	network.GetInference(mask_d);
 	cudaMemcpy(mask, mask_d, mask_len, cudaMemcpyDeviceToHost); 
 	SaveImageFile("mask.bmp", mask, in_w, in_h);	
