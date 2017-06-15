@@ -159,6 +159,8 @@ int main(int argc, char* argv[])
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
 	network.InitFilterDesc();
 	network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), in_h, in_w, in_c);   
+	network.Init(in_h, in_w, in_c);
+	network.inference();
 
 	return 0;
 }
