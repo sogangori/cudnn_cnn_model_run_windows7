@@ -78,6 +78,7 @@ public:
 		FILE* inf = fopen(path, "rb");
 		variables_h = new float[variable_length];
 		variables_convert_h = new float[variable_length];
+		checkCUDA(cudaMalloc(&variables_d, sizeof(float)* variable_length));
 		int size = fread(variables_h, sizeof(float), variable_length, inf);
 		printf("read %d\n", size);
 		fclose(inf);		
@@ -110,8 +111,16 @@ public:
 					{
 						for (int k = 0; k < kcount; k++)
 						{
-							int index_in = v_offset + h*width*channel*kcount + w*channel*kcount + c * kcount + k;
-							int index_out = v_offset+ k * channel * height * width + c * height * width + h * width + w;
+							int index_in = v_offset 
+								+ (h * width * channel * kcount) 
+								+ (w * channel * kcount) 
+								+ (c * kcount)
+								+ k;
+							int index_out = v_offset
+								+ k * channel * height * width
+								+ c * height * width 
+								+ h * width 
+								+ w;
 							variables_convert_h[index_out] = variables_h[index_in];
 						}
 					}
@@ -119,8 +128,8 @@ public:
 			}
 			v_offset += height*width*channel*kcount;
 		}
-		checkCUDA(cudaMalloc(&variables_d, sizeof(float)* variable_length));
-		checkCUDA(cudaMemcpy(variables_d, variables_convert_h, sizeof(float)* variable_length, cudaMemcpyHostToDevice));
+		
+		checkCUDA(cudaMemcpy(variables_d, variables_h, sizeof(float)* variable_length, cudaMemcpyHostToDevice));
 	}
 
 	void CreateTensorDescriptor(char *NetLayer,int layerCount, int inputH, int inputW, int inputC){
@@ -191,6 +200,7 @@ public:
 			int c = filterShapePtr[offset + 2];
 			int k = filterShapePtr[offset + 3];
 			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
+			//checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NHWC, k, c, h, w));
 			checkCUDA(cudnnSetTensor4dDescriptor(filterTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, k, c, h, w));
 			filterDescriptor_vec.push_back(filterDesc);
 			filter_td_vec.push_back(filterTensorDesc);
@@ -271,6 +281,7 @@ public:
 			checkNPP(nppsMeanStdDev_32f(target, w * h, &pMeanStd[i], &pMeanStd[c + i], pMeanStdBuffer));
 		}
 
+		Std2Var << <1, c >> >(pMeanStd + c);
 		cudnnBatchNormalizationForwardInference(cudnnHandle, CUDNN_BATCHNORM_SPATIAL, &alpha, &beta, descriptor,
 			src, descriptor, dst, filterD, bnScale, bnBias, pMeanStd, pMeanStd + c, 0.0001);
 	}
@@ -374,7 +385,7 @@ public:
 		ConvBN(buffer2_d, buffer1_d);
 		Activate(buffer1_d, buffer2_d);
 
-		//8 C BN
+		//8 C B
 		ConvBN(buffer2_d, buffer1_d);
 
 		//9 U A R C B
@@ -407,8 +418,6 @@ public:
 		//15 U
 		UnPool(buffer2_d, outData_d);
 		
-		//Nornalize(buffer1_d, outData_d, td_vec[td_vec.size() - 1]);
-
 		if (td_vec.size() != tdInx + 1)
 		{
 			printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);
