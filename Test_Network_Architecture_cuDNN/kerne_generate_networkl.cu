@@ -155,12 +155,14 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "../weights/weight.dat";		 
-	
+	uchar * mask = new uchar[in_w*in_h];
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
 	network.InitFilterDesc();
 	network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), in_h, in_w, in_c);   
 	network.Init(in_h, in_w, in_c);
 	network.inference();
+	network.GetInference(mask);
+	SaveImageFile("mask.bmp", mask, in_w, in_h);
 
 	return 0;
 }

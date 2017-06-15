@@ -128,7 +128,7 @@ void PrintDescriptor(int index, cudnnTensorDescriptor_t descriptor)
 	int                                hStride;
 	int                                wStride;
 	checkCUDA(cudnnGetTensor4dDescriptor(descriptor, &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
-	printf("PrintDescriptor(%d) %d x %d x %d x %d \n", index, n, c, h, w);
+	printf("[INFO] DescriptorShape(%d) %d x %d x %d x %d \n", index, n, c, h, w);
 }
 
 int GetTensorSize(cudnnTensorDescriptor_t descriptor)
@@ -156,7 +156,7 @@ int GetFilterSize(cudnnFilterDescriptor_t filterDesc)
 	int                                h;        // height of input section
 	int                                w;        // width of input section
 	cudnnGetFilter4dDescriptor(filterDesc, &dataType, &format, &k, &c, &h, &w);
-	printf("GetFilterSize() dataType : %d, format : %d, %d x %d x %d x %d \n", dataType, format, k, c, h, w);
+	printf("GetFilterSize() format : %d, %d x %d x %d x %d \n", format, k, c, h, w);
 	return k* c* h* w;		
 }
 
