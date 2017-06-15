@@ -156,6 +156,7 @@ int main(int argc, char* argv[])
 
 	char * variablePath = "../weights/weight.dat";		 
 	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_05.dat";
+	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
 
 	int mask_len = in_w * in_h;
 	int input_len = in_c * mask_len;
