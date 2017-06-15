@@ -155,14 +155,47 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "../weights/weight.dat";		 
-	uchar * mask = new uchar[in_w*in_h];
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_01.dat";
+
+	int mask_len = in_w * in_h;
+	int input_len = in_c * mask_len;
+	float* input = new float[input_len + mask_len];
+	float* input_d;
+	uchar * mask = new uchar[mask_len];
+	uchar * mask_d;
+	cudaMalloc(&input_d, input_len * sizeof(float));
+	cudaMalloc(&mask_d, in_w*in_h);
+
+	FILE *inf = fopen(dataPath, "rb");
+	if (inf == NULL) {
+		printf("ERROR Can't Read float File %s \n", dataPath);
+		return 1;
+	}
+
+	size_t t = fread(input, sizeof(float), input_len + mask_len, inf);
+	fclose(inf);
+	printf("Read %d\n", t);
+	if (t != input_len)  printf("[WARN] read count (%d) != (%d) \n", t, input_len);
+
+	double sum = 0;
+	for (int i = 0; i < input_len/10; i++)
+	{
+		sum += input[i];
+	}
+	printf("sum %f \n", sum);
+	
+	cudaMemcpy(input_d, input + mask_len, input_len * sizeof(float), cudaMemcpyHostToDevice);
+
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
 	network.InitFilterDesc();
 	network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), in_h, in_w, in_c);   
 	network.Init(in_h, in_w, in_c);
+	network.CopyInput(input_d);
 	network.inference();
-	network.GetInference(mask);
-	SaveImageFile("mask.bmp", mask, in_w, in_h);
+	//network.TestCopyInput();
+	network.GetInference(mask_d);
+	cudaMemcpy(mask, mask_d, mask_len, cudaMemcpyDeviceToHost); 
+	SaveImageFile("mask.bmp", mask, in_w, in_h);	
 
 	return 0;
 }
