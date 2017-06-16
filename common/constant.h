@@ -2,6 +2,7 @@
 const int FILTER_DIM = 4;
 
 const char CONV = 'c';
+const char BIAS = 'b';
 const char BN = 'n';
 const char POOL = 'p';
 const char UN_POOL = 'u';

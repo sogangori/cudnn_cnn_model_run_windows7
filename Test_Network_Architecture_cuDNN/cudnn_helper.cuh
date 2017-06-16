@@ -34,7 +34,7 @@ void checkCPU(int status)
 {
 	if (status != 0)
 	{
-		cout << "[ERROR] CPU " << status << endl;
+		cout << "[ERROR] CPU " << status << endl << endl;;
 		exit(0);
 	}
 }
@@ -42,7 +42,7 @@ void checkCPU(int status)
 void checkCUDNN(cudnnStatus_t  status)
 {
 	if (status != CUDA_SUCCESS)
-		cout << "[ERROR] CUDA " << status << endl;
+		cout << "[ERROR] CUDA " << status << endl << endl;;
 }
 
 void checkCUDA(cudnnStatus_t status)
@@ -128,7 +128,7 @@ void PrintDescriptor(int index, cudnnTensorDescriptor_t descriptor)
 	int                                hStride;
 	int                                wStride;
 	checkCUDA(cudnnGetTensor4dDescriptor(descriptor, &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
-	printf("[INFO] DescriptorShape(%d) %d x %d x %d x %d \n", index, n, c, h, w);
+	printf("[Info] DescriptorShape(%d) %d x %d x %d x %d \n", index, n, c, h, w);
 }
 
 int GetTensorSize(cudnnTensorDescriptor_t descriptor)
@@ -156,7 +156,7 @@ int GetFilterSize(cudnnFilterDescriptor_t filterDesc)
 	int                                h;        // height of input section
 	int                                w;        // width of input section
 	cudnnGetFilter4dDescriptor(filterDesc, &dataType, &format, &k, &c, &h, &w);
-	printf("GetFilterSize() format : %d, %d x %d x %d x %d \n", format, k, c, h, w);
+	printf("GetFilterSize()  %d x %d x %d x %d \n", k, c, h, w);
 	return k* c* h* w;		
 }
 
@@ -228,7 +228,7 @@ __global__ void ArgMax(uchar* dst, float* src)
 	uchar v = 0;
 	if (src[idx + channelOffset] > src[idx]) v = 255;
 	dst[idx] = v;
-	dst[idx] = src[idx + channelOffset] * 400;
+	dst[idx] = src[idx + channelOffset] * 200;
 }
 
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)
@@ -243,7 +243,7 @@ __global__ void math_std_normal(float* dst, float* src, float *meanStdArray)
 	float mean = meanStdArray[0];
 	float deviation = meanStdArray[1];
 
-	dst[index] = (src[index] - mean) / deviation;
+	dst[index] = (src[index] - mean) / (deviation+0.001f);
 }
 
 __global__ void Std2Var(float* dst)
