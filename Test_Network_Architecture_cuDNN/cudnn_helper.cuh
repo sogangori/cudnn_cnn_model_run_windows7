@@ -228,7 +228,7 @@ __global__ void ArgMax(uchar* dst, float* src)
 	uchar v = 0;
 	if (src[idx + channelOffset] > src[idx]) v = 255;
 	dst[idx] = v;
-	//dst[idx] = src[idx + channelOffset] * 400;
+	dst[idx] = src[idx + channelOffset] * 400;
 }
 
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)

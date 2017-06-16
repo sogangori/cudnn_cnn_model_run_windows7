@@ -2,22 +2,10 @@
 #include "Network.cuh"
 
 char NetLayer[] = {
-	CONV, BN, RELU,
 	POOL, CONV, BN, RELU,
 	POOL, CONV, BN, RELU,
 	POOL, CONV, BN, RELU,
-	POOL, CONV, BN, RELU,
-	POOL, CONV, BN, RELU,
-	CONV, BN,
-	UN_POOL, ADD, RELU, CONV, BN, RELU,
-	CONV, BN,
-	UN_POOL, ADD, RELU, CONV, BN,
-	UN_POOL, ADD, RELU, CONV, BN,
-	UN_POOL, ADD, RELU,
-	CONV, BN, RELU,
-	CONV, BN, RELU,
-	CONV, BN, RELU,
-	UN_POOL
+	UN_POOL, UN_POOL, UN_POOL
 };
 int in_w = 256;
 int in_h = 256;
@@ -26,18 +14,7 @@ int label_c = 2;
 int filterShape[][FILTER_DIM] = {
 	{ 3, 3, in_c, in_c * 2 }, { 1, 1, 1, in_c * 2 }, { 1, 1, 1, in_c * 2 },
 	{ 3, 3, in_c * 2, in_c * 4 }, { 1, 1, 1, in_c * 4 }, { 1, 1, 1, in_c * 4 },
-	{ 3, 3, in_c * 4, in_c * 8 }, { 1, 1, 1, in_c * 8 }, { 1, 1, 1, in_c * 8 },
-	{ 3, 3, in_c * 8, in_c * 16 }, { 1, 1, 1, in_c * 16 }, { 1, 1, 1, in_c * 16 },
-	{ 3, 3, in_c * 16, in_c * 32 }, { 1, 1, 1, in_c * 32 }, { 1, 1, 1, in_c * 32 },
-	{ 3, 3, in_c * 32, in_c * 64 }, { 1, 1, 1, in_c * 64 }, { 1, 1, 1, in_c * 64 },
-	{ 3, 3, in_c * 64, in_c * 32 }, { 1, 1, 1, in_c * 32 }, { 1, 1, 1, in_c * 32 },
-	{ 3, 3, in_c * 32, in_c * 32 }, { 1, 1, 1, in_c * 32 }, { 1, 1, 1, in_c * 32 },
-	{ 3, 3, in_c * 32, in_c * 16 }, { 1, 1, 1, in_c * 16 }, { 1, 1, 1, in_c * 16 },
-	{ 3, 3, in_c * 16, in_c * 8 }, { 1, 1, 1, in_c * 8 }, { 1, 1, 1, in_c * 8 },
-	{ 3, 3, in_c * 8, in_c * 4 }, { 1, 1, 1, in_c * 4 }, { 1, 1, 1, in_c * 4 },
-	{ 3, 3, in_c * 4, in_c * 2 }, { 1, 1, 1, in_c * 2 }, { 1, 1, 1, in_c * 2 },
-	{ 3, 3, in_c * 2, in_c * 1 }, { 1, 1, 1, in_c * 1 }, { 1, 1, 1, in_c * 1 },
-	{ 3, 3, in_c * 1, label_c }, { 1, 1, 1, label_c }, { 1, 1, 1, label_c }
+	{ 3, 3, in_c * 4, label_c }, { 1, 1, 1, label_c }, { 1, 1, 1, label_c }
 };
 
 int CheckArchitecture(int in_h, int in_w, int inputC)
@@ -154,7 +131,7 @@ int main(int argc, char* argv[])
 	
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
-	char * variablePath = "../weights/weight.dat";		 
+	char * variablePath = "../weights/weight_small.dat";		 
 	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_05.dat";
 	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
 

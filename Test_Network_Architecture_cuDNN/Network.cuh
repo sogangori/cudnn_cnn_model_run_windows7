@@ -47,10 +47,6 @@ private:
 	float* pMeanStd;
 
 public:
-	char * variablePath = "C:/ultrasound/filter/network/variable.txt";
-	const int POOL_COUNT = 7;
-	const int CONV_COUNT = 14;
-	int filterDepth = 3;
 	
 	float *inData_d;
 	Network()
@@ -94,7 +90,6 @@ public:
 		}
 
 		//필터 돌리자 HWCN -> NCHW
-		//variables_convert_h
 		int v_offset = 0;
 		for (int i = 0; i < filterCount / FILTER_DIM; i++)
 		{
@@ -199,16 +194,15 @@ public:
 			int w = filterShapePtr[offset + 1];
 			int c = filterShapePtr[offset + 2];
 			int k = filterShapePtr[offset + 3];
-			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
-			//checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NHWC, k, c, h, w));
+			//checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
+			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NHWC, k, c, h, w));
 			checkCUDA(cudnnSetTensor4dDescriptor(filterTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, k, c, h, w));
 			filterDescriptor_vec.push_back(filterDesc);
 			filter_td_vec.push_back(filterTensorDesc);
 		}
 		for (int i = 0; i < filterDescriptor_vec.size(); i++)
 		{
-			int size = GetFilterSize(filterDescriptor_vec[i]);
-			printf("[%d] size: %d", i, size);
+			int size = GetFilterSize(filterDescriptor_vec[i]);			
 		}
 	}
 
@@ -236,7 +230,7 @@ public:
 		cout << "Fastest algorithm for conv = " << algo << endl;
 		checkCUDA(cudnnGetConvolutionForwardWorkspaceSize(cudnnHandle, td_vec[0], filterDescriptor_vec[0], convDesc, td_vec[0], algo, &sizeInBytes));
 		cout << "sizeInBytes " << sizeInBytes << endl;
-		if (sizeInBytes > 0) checkCUDA(cudaMalloc(&workSpace, sizeInBytes*2));
+		if (sizeInBytes > 0) checkCUDA(cudaMalloc(&workSpace, sizeInBytes));
 
 		testBuffer_h = new float[GetTensorSize(td_vec[0])];
 		
@@ -258,7 +252,7 @@ public:
 		int nBufferSize;
 		nppsMeanStdDevGetBufferSize_32f(in_w * in_h, &nBufferSize);
 		cudaMalloc(&pMeanStdBuffer, nBufferSize);
-		cudaMalloc(&pMeanStd, sizeof(float)* nBufferSize);//TODO. 대충 해놓음
+		cudaMalloc(&pMeanStd, sizeof(float)* nBufferSize*4);//TODO. 대충 해놓음
 		printf("Network Init() OK \n");
 	}
 
@@ -341,9 +335,10 @@ public:
 		if (isDebug) printf("Network inference() \n");
 		tdInx = variableInx = 0;		
 		
-		Nornalize(inData_d, buffer1_d, td_vec[tdInx]);
+		Nornalize(inData_d, buffer2_d, td_vec[tdInx]);
 		 
 		//0. CBN R
+		Pool();
 		ConvBN(buffer1_d, buffer2_d);
 		Activate(buffer2_d, buffer2_d);
 		
@@ -351,72 +346,18 @@ public:
 		Pool();
 		ConvBN(buffer1_d, buffer2_d);
 		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature0, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));	
-		
+				
 		//2. P CBN R
 		Pool();
 		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature1, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-		
-		//3. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature2, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
+		Activate(buffer2_d, buffer2_d);			
+		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
 
-		//4. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature3, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-
-		//5. PCBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-
-		//6. C BN
-		ConvBN(buffer2_d, buffer1_d);
-		//7. U A R C BN R
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature3, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//8 C B
-		ConvBN(buffer2_d, buffer1_d);
-
-		//9 U A R C B
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature2, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-
-		//10 U A R C B
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature1, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-
-		//11 U A R 
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature0, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//12 C B R		
-		ConvBN(buffer2_d,buffer1_d);
-		Activate(buffer1_d, buffer2_d);		
-		//13 C B R		
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		//14 C B R
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//15 U
-		UnPool(buffer2_d, outData_d);
+		//3 U
+		Resize(buffer2_d, td_vec[tdInx], outData_d, td_vec[0]);
+		//UnPool(buffer2_d, buffer1_d);
+		//UnPool(buffer1_d, buffer2_d);
+		//UnPool(buffer2_d, outData_d);
 		
 		if (td_vec.size() != tdInx + 1)
 		{

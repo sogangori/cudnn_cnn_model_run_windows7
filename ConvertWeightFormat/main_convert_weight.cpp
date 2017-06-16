@@ -73,14 +73,14 @@ void write(float* src, char* path, int length)
 
 int main()
 {
-	char * variablePath = "../weights/variable2.txt";
-	char * variablePath2 = "../weights/weight.dat";
+	char * variablePath = "c:/ultrasound/filter/network/variable_small.txt";
+	char * variablePath2 = "../weights/weight_small.dat";
 	variable_reader variable_read = variable_reader(variablePath);
 
 	int filter_len = variable_read.ReadAll();
 	printf("filter_len :%d \n", filter_len);
 
-	//write(variable_read.src, variablePath2, filter_len);
+	write(variable_read.src, variablePath2, filter_len);
 	float* src = new float[filter_len];
 	read(src, variablePath2, filter_len);
 
