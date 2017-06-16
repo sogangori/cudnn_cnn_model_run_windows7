@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_weightDataReader", "Te
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_DataRead", "Test_DataRead\Test_DataRead.vcxproj", "{824D4758-D6F4-4B7E-AAAE-53CDFBA6E186}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network", "Network\Network.vcxproj", "{5838ED1E-D683-49D9-A70A-0D69073308C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -111,6 +113,18 @@ Global
 		{824D4758-D6F4-4B7E-AAAE-53CDFBA6E186}.Release|Win32.ActiveCfg = Release|Win32
 		{824D4758-D6F4-4B7E-AAAE-53CDFBA6E186}.Release|Win32.Build.0 = Release|Win32
 		{824D4758-D6F4-4B7E-AAAE-53CDFBA6E186}.Release|x64.ActiveCfg = Release|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|Win32.Build.0 = Debug|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|x64.ActiveCfg = Debug|x64
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Debug|x64.Build.0 = Debug|x64
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|Win32.ActiveCfg = Release|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|Win32.Build.0 = Release|Win32
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|x64.ActiveCfg = Release|x64
+		{5838ED1E-D683-49D9-A70A-0D69073308C7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

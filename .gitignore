@@ -8,3 +8,7 @@
 *.ilk
 *.exe
 *.dll
+*.bmp
+*.dat
+*.txt
+*.opensdf
