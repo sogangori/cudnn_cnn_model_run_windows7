@@ -228,7 +228,7 @@ __global__ void ArgMax(uchar* dst, float* src)
 	uchar v = 0;
 	if (src[idx + channelOffset] > src[idx]) v = 255;
 	dst[idx] = v;
-	dst[idx] = src[idx + channelOffset] * 200;
+	//dst[idx] = src[idx + channelOffset] * 255;
 }
 
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)
@@ -244,6 +244,12 @@ __global__ void math_std_normal(float* dst, float* src, float *meanStdArray)
 	float deviation = meanStdArray[1];
 
 	dst[index] = (src[index] - mean) / (deviation+0.001f);
+}
+
+__global__ void math_std_normal(float* dst, float* src, float mean, float deviation)
+{	
+	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
+	dst[index] = (src[index] - mean) / (deviation + 0.001f);
 }
 
 __global__ void Std2Var(float* dst)

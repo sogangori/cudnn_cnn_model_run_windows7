@@ -87,7 +87,7 @@ int CheckFilterCount(int in_h, int in_w, int inputC)
 			int filterDepth = filterShape[filter_index][2];
 			if (inputC != filterDepth)
 			{
-				printf("%s data channel size (%d) is not Equal with (%d)th Filter channel (%d)\n",
+				printf("%s Check CONV data channel size (%d) is not Equal with (%d)th Filter channel (%d)\n",
 					CHAR_ERROR, inputC, filter_index, filterDepth);
 				return -1;
 			}
@@ -99,7 +99,7 @@ int CheckFilterCount(int in_h, int in_w, int inputC)
 			int filterCount = filterShape[filter_index][2];
 			if (inputC != filterCount)
 			{
-				printf("%s BN,BAIS data channel size (%d) is not Equal with Filter channel (%d)\n",
+				printf("%s Check BN,BAIS data channel size (%d) is not Equal with Filter channel (%d)\n",
 					CHAR_ERROR, inputC, filterCount);
 				return -1;
 			}
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 	
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
-	char * variablePath = "../weights/weight_small_bias.dat";		 
+	char * variablePath = "../weights/weight_small.dat";		 
 	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_05.dat";
 	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
 
