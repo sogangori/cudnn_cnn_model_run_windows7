@@ -134,8 +134,8 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/weights/weight_small_bn.dat";		 
-	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_05.dat";
-	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
+	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_00.dat";
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_10.dat";
 
 	int mask_len = in_w * in_h;
 	int input_len = in_c * mask_len;
@@ -147,6 +147,7 @@ int main(int argc, char* argv[])
 	cudaMalloc(&input_d, input_len * sizeof(float));
 	cudaMalloc(&mask_d, in_w*in_h);
 
+	
 	FILE *inf = fopen(dataPath, "rb");
 	if (inf == NULL) {
 		printf("ERROR Can't Read float File %s \n", dataPath);

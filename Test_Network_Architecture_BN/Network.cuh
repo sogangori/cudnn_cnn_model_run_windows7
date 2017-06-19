@@ -249,7 +249,7 @@ public:
 		checkCUDA(cudnnGetConvolutionForwardAlgorithm(cudnnHandle, td_vec[0], filterDescriptor_vec[0], convDesc, td_vec[0], CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo));
 		cout << "Fastest algorithm for conv = " << algo << endl;
 		checkCUDA(cudnnGetConvolutionForwardWorkspaceSize(cudnnHandle, td_vec[0], filterDescriptor_vec[0], convDesc, td_vec[0], algo, &sizeInBytes));
-		sizeInBytes *= 10;
+		sizeInBytes *= 50;
 		cout << "sizeInBytes " << sizeInBytes << endl;
 		
 		if (sizeInBytes > 0) checkCUDA(cudaMalloc(&workSpace, sizeInBytes));
@@ -344,7 +344,7 @@ public:
 		Std2Var << <1, c >> >(estimatedVariance);
 		checkCUDNN(cudnnBatchNormalizationForwardInference(cudnnHandle, CUDNN_BATCHNORM_SPATIAL, &alpha, &beta, descriptor,
 			src, descriptor, dst, bnScaleBiasMeanVarDesc, bnScale, bnBias, estimatedMean, estimatedVariance, 0.001));
-		batchNormal << <dim3(c, h), w >> >(src, dst, estimatedMean, estimatedVariance, bnScale, bnBias);
+		//batchNormal << <dim3(c, h), w >> >(src, dst, estimatedMean, estimatedVariance, bnScale, bnBias);
 		tdInx++;
 		variableInx += 2;
 		Log("BN Out");
@@ -415,9 +415,9 @@ public:
 		//mean/std : -26.7, 612
 
 		Test_Sum_Mean(inData_d);
-		checkCUDA(cudaMemcpy(buffer1_d, inData_d, GetTensorSize(td_vec[tdInx])*sizeof(float), cudaMemcpyDeviceToDevice));
+		//checkCUDA(cudaMemcpy(buffer1_d, inData_d, GetTensorSize(td_vec[tdInx])*sizeof(float), cudaMemcpyDeviceToDevice));
 				
-		//NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
+		NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
 		//0. P CBN R
 		ConvBN(buffer1_d);				
 		Activate(buffer1_d, buffer2_d);		
