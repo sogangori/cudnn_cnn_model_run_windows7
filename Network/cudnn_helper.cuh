@@ -272,3 +272,16 @@ __global__ void ArgMax(uchar* dst, float* src)
 	//if (v0 > 255) v0 = 255;
 	//dst[idx] = v0;
 }
+
+__global__ void GetKnownIndex(uchar* dst, float* src, int channel)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int offset = gridDim.x * blockDim.x * (channel - 1);
+	int wh = gridDim.x * blockDim.x;
+	int idx0 = idx + wh * 0;
+	int idx1 = idx + wh * 1;
+	int Idx2 = idx + wh * 2;
+	uchar v = 255;
+	if ((src[idx0] > src[idx1]) && (src[idx0] > src[Idx2])) v = 0;
+	dst[idx] = v;
+}
