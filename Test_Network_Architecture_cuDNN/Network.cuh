@@ -5,7 +5,6 @@
 #include <npps.h>
 #include <nppi_arithmetic_and_logical_operations.h>
 #include "constant.h"
-//#include "variable_reader.h"
 
 
 class Network{
@@ -206,10 +205,13 @@ public:
 		}
 	}
 
-	float* GetVariablePtr(int variableIndex){
-		int size = GetFilterSize(filterDescriptor_vec[variableIndex]);		
-		float* weightPtr = variables_d + size;
-		return weightPtr;
+	float* GetVariablePtr(int variableIndex)
+	{
+		int offset = 0;
+		for (int i = 0; i < variableIndex; i++)
+			offset += GetFilterSize(filterDescriptor_vec[i]);
+		
+		return variables_d + offset;
 	}
 
 	void Init(int in_h, int in_w, int in_c)
@@ -277,7 +279,7 @@ public:
 
 		Std2Var << <1, c >> >(pMeanStd + c);
 		cudnnBatchNormalizationForwardInference(cudnnHandle, CUDNN_BATCHNORM_SPATIAL, &alpha, &beta, descriptor,
-			src, descriptor, dst, filterD, bnScale, bnBias, pMeanStd, pMeanStd + c, 0.0001);
+			src, descriptor, dst, filterD, bnScale, bnBias, pMeanStd, pMeanStd + c, 0.001);
 	}
 
 	void Log(char* layer)

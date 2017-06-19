@@ -215,20 +215,20 @@ void Print(vector<cudnnTensorDescriptor_t> tensorDescriptor_vec){
 __global__ void softMax2Uchar(uchar* dst, float* src,int channel)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int channelOffset = gridDim.x * blockDim.x * channel;
+	int offset = gridDim.x * blockDim.x * channel;
 
-	dst[idx] = src[idx + channelOffset]*255;
+	dst[idx] = src[idx + offset]*255;
 }
 
 __global__ void ArgMax(uchar* dst, float* src)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int channelOffset = gridDim.x * blockDim.x;
+	int offset = gridDim.x * blockDim.x;
 
 	uchar v = 0;
-	if (src[idx + channelOffset] > src[idx]) v = 255;
+	if (src[idx + offset] > src[idx]) v = 255;
 	dst[idx] = v;
-	//dst[idx] = src[idx + channelOffset] * 255;
+	//dst[idx] = src[idx + offset] * 255;
 }
 
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)
@@ -249,7 +249,7 @@ __global__ void math_std_normal(float* dst, float* src, float *meanStdArray)
 __global__ void math_std_normal(float* dst, float* src, float mean, float deviation)
 {	
 	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
-	dst[index] = (src[index] - mean) / (deviation + 0.001f);
+	dst[index] = (src[index] ) / (deviation + 0.001f);
 }
 
 __global__ void Std2Var(float* dst)

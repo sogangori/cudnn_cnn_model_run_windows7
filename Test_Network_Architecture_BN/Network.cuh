@@ -5,12 +5,11 @@
 #include <npps.h>
 #include <nppi_arithmetic_and_logical_operations.h>
 #include "constant.h"
-//#include "variable_reader.h"
 
 
 class Network{
 private:
-	bool isDebug = true;
+	bool isDebug = true;	
 	float one = 1;
 	float zero = 0;
 	float alpha = 1.0f;
@@ -20,7 +19,7 @@ private:
 	float *variables_h;
 	float *variables_convert_h;
 	float *variables_d;
-	float *outData_d, *buffer1_d, *buffer2_d;
+	float *outData_d, *buffer1_d, *buffer2_d;	
 	float *feature0, *feature1, *feature2, *feature3;
 	void* workSpace;
 	int tdInx = 0;
@@ -47,7 +46,7 @@ private:
 	float* pMeanStd;
 
 public:
-
+	
 	float *inData_d;
 	Network()
 	{
@@ -60,24 +59,24 @@ public:
 	}
 
 	void LoadWeight(char* path, int *filterShape, int filter_count)
-	{
+	{		
 		filterShapePtr = filterShape;
 		filterCount = filter_count;
 		variable_length = 0;
-		for (int i = 0; i < filterCount / FILTER_DIM; i++)
+		for (int i = 0; i < filterCount/FILTER_DIM; i++)
 		{
 			int offset = i * FILTER_DIM;
 			variable_length += filterShape[offset + 0] * filterShape[offset + 1] * filterShape[offset + 2] * filterShape[offset + 3];
 		}
-		printf("%s, filterCount:%d, filter_length : %d\n", path, filterCount, variable_length);//8,408,788
-
+		printf("%s, filterCount:%d, filter_length : %d\n", path,filterCount, variable_length);//8,408,788
+				
 		FILE* inf = fopen(path, "rb");
 		variables_h = new float[variable_length];
 		variables_convert_h = new float[variable_length];
 		checkCUDA(cudaMalloc(&variables_d, sizeof(float)* variable_length));
 		int size = fread(variables_h, sizeof(float), variable_length, inf);
 		printf("read %d\n", size);
-		fclose(inf);
+		fclose(inf);		
 
 		for (int i = 0; i < 2; i++)
 		{
@@ -106,15 +105,15 @@ public:
 					{
 						for (int k = 0; k < kcount; k++)
 						{
-							int index_in = v_offset
-								+ (h * width * channel * kcount)
-								+ (w * channel * kcount)
+							int index_in = v_offset 
+								+ (h * width * channel * kcount) 
+								+ (w * channel * kcount) 
 								+ (c * kcount)
 								+ k;
 							int index_out = v_offset
 								+ k * channel * height * width
-								+ c * height * width
-								+ h * width
+								+ c * height * width 
+								+ h * width 
 								+ w;
 							variables_convert_h[index_out] = variables_h[index_in];
 						}
@@ -123,11 +122,11 @@ public:
 			}
 			v_offset += height*width*channel*kcount;
 		}
-
+		
 		checkCUDA(cudaMemcpy(variables_d, variables_convert_h, sizeof(float)* variable_length, cudaMemcpyHostToDevice));
 	}
 
-	void CreateTensorDescriptor(char *NetLayer, int layerCount, int inputH, int inputW, int inputC){
+	void CreateTensorDescriptor(char *NetLayer,int layerCount, int inputH, int inputW, int inputC){
 
 		int filter_index = 0;
 		printf("%s Feature Map shapes\n", CHAR_INFO);
@@ -146,12 +145,12 @@ public:
 		{
 			char layer = NetLayer[i];
 			if (layer == CONV)
-			{
+			{				
 				inputC = filterShapePtr[filter_index*FILTER_DIM + 3];
 				filter_index++;
 			}
-			else if (layer == BN) filter_index += 2;
-			else if (layer == BIAS) filter_index++;
+			else if (layer == BN) filter_index += 2;			
+			else if (layer == BIAS) filter_index ++;			
 			else if (layer == POOL){
 				inputW /= 2;
 				inputH /= 2;
@@ -174,7 +173,7 @@ public:
 		}
 		for (int i = 0; i < td_vec.size(); i++)
 		{
-			PrintDescriptor(i, td_vec[i]);
+			PrintDescriptor(i,td_vec[i]);
 		}
 	}
 
@@ -192,24 +191,26 @@ public:
 			int w = filterShapePtr[offset + 1];
 			int c = filterShapePtr[offset + 2];
 			int k = filterShapePtr[offset + 3];
-
+			
 			checkCUDA(cudnnSetTensor4dDescriptor(filterTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, k, c, h, w));
 			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
-			//checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NHWC, k, c, h, w));
-
+			
 			filterDescriptor_vec.push_back(filterDesc);
 			filter_td_vec.push_back(filterTensorDesc);
 		}
 		for (int i = 0; i < filterDescriptor_vec.size(); i++)
 		{
-			int size = GetFilterSize(filterDescriptor_vec[i]);
+			int size = GetFilterSize(filterDescriptor_vec[i]);			
 		}
 	}
 
-	float* GetVariablePtr(int variableIndex){
-		int size = GetFilterSize(filterDescriptor_vec[variableIndex]);
-		float* weightPtr = variables_d + size;
-		return weightPtr;
+	float* GetVariablePtr(int variableIndex)
+	{
+		int offset = 0;
+		for (int i = 0; i < variableIndex; i++)
+			offset += GetFilterSize(filterDescriptor_vec[i]);
+		
+		return variables_d + offset;
 	}
 
 	void Init(int in_h, int in_w, int in_c)
@@ -219,46 +220,81 @@ public:
 		checkCUDA(cudnnCreateConvolutionDescriptor(&convDesc));
 		checkCUDA(cudnnCreatePoolingDescriptor(&maxPoolDesc));
 		checkCUDA(cudnnCreateActivationDescriptor(&actDesc));
-		checkCUDA(cudnnCreateOpTensorDescriptor(&opTensorDesc));
+		checkCUDA(cudnnCreateOpTensorDescriptor(&opTensorDesc));		
 
 		checkCUDA(cudnnSetConvolution2dDescriptor(convDesc, 1, 1, 1, 1, 1, 1, CUDNN_CROSS_CORRELATION));
 		checkCUDA(cudnnSetPooling2dDescriptor(maxPoolDesc, CUDNN_POOLING_MAX, CUDNN_NOT_PROPAGATE_NAN, 2, 2, 0, 0, 2, 2));
 		checkCUDA(cudnnSetActivationDescriptor(actDesc, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0));
-		checkCUDA(cudnnSetOpTensorDescriptor(opTensorDesc, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));
+		checkCUDA(cudnnSetOpTensorDescriptor(opTensorDesc, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN));		
 
 		checkCUDA(cudnnGetConvolutionForwardAlgorithm(cudnnHandle, td_vec[0], filterDescriptor_vec[0], convDesc, td_vec[0], CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo));
 		cout << "Fastest algorithm for conv = " << algo << endl;
 		checkCUDA(cudnnGetConvolutionForwardWorkspaceSize(cudnnHandle, td_vec[0], filterDescriptor_vec[0], convDesc, td_vec[0], algo, &sizeInBytes));
 		cout << "sizeInBytes " << sizeInBytes << endl;
-		if (sizeInBytes > 0) checkCUDA(cudaMalloc(&workSpace, sizeInBytes*10));//todo
+		if (sizeInBytes > 0) checkCUDA(cudaMalloc(&workSpace, sizeInBytes));
 
 		testBuffer_h = new float[GetTensorSize(td_vec[0])];
-
+		
 		checkCUDA(cudaMalloc((void**)&inData_d, GetTensorSize(td_vec[0])*sizeof(float)));
-		checkCUDA(cudaMalloc((void**)&outData_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float)));
+		checkCUDA(cudaMalloc((void**)&outData_d, GetTensorSize(td_vec[td_vec.size()-1])*sizeof(float)));
 		checkCUDA(cudaMalloc((void**)&buffer1_d, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
-		checkCUDA(cudaMalloc((void**)&buffer2_d, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
+		checkCUDA(cudaMalloc((void**)&buffer2_d, 2 * GetTensorSize(td_vec[0])*sizeof(float)));		
 		checkCUDA(cudaMalloc((void**)&feature0, GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMalloc((void**)&feature1, GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMalloc((void**)&feature2, GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMalloc((void**)&feature3, GetTensorSize(td_vec[0])*sizeof(float)));
+		
 
-
-		checkCUDA(cudaMemset(inData_d, 0, GetTensorSize(td_vec[0])*sizeof(float)));
+		checkCUDA(cudaMemset(inData_d, 0, GetTensorSize(td_vec[0])*sizeof(float)));		
 		checkCUDA(cudaMemset(buffer1_d, 0, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMemset(buffer2_d, 0, 2 * GetTensorSize(td_vec[0])*sizeof(float)));
 		checkCUDA(cudaMemset(outData_d, 0, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float)));
 
 		int nBufferSize;
 		nppsMeanStdDevGetBufferSize_32f(in_w * in_h, &nBufferSize);
+		nBufferSize *= 10;//TODO. 대충 해놓음
 		cudaMalloc(&pMeanStdBuffer, nBufferSize);
-		cudaMalloc(&pMeanStd, sizeof(float)* nBufferSize * 4);//TODO. 대충 해놓음
+		cudaMalloc(&pMeanStd, sizeof(float)* nBufferSize);
 		printf("Network Init() OK \n");
 	}
 
-	void BatchNornalize(float* src, float* dst, cudnnTensorDescriptor_t descriptor, cudnnTensorDescriptor_t filterD,
-		float* bnScale, float* bnBias)
+	void Log(char* layer)
 	{
+		printf("[Log] %s\t(%d, %d)\n", layer, tdInx, variableInx);
+		PrintDescriptor(tdInx, td_vec[tdInx]);
+	}
+
+	void Bias(float* dst)
+	{
+		Log("Bias In");
+
+		cudnnTensorDescriptor_t biasDesc = filter_td_vec[variableInx];		
+		cudnnTensorDescriptor_t tensorDesc = td_vec[tdInx];
+		float * bias = GetVariablePtr(variableInx);
+		checkCUDA(cudnnAddTensor(cudnnHandle, &alpha, biasDesc, bias, &alpha, tensorDesc, dst));
+		tdInx++;
+		variableInx++;
+		Log("Bias Out");
+	}
+
+	void Conv(float* src, float* dst)
+	{
+		Log("convIn");
+
+		checkCUDA(cudnnConvolutionForward(cudnnHandle, &alpha, td_vec[tdInx], src,
+			filterDescriptor_vec[variableInx], GetVariablePtr(variableInx), convDesc, algo, workSpace, sizeInBytes, &beta, td_vec[tdInx + 1], dst));
+		tdInx++;
+		variableInx ++;
+		Log("conv Out");		
+	}
+	
+	void BatchNormalize(float* src, float* dst)
+	{
+		Log("BN In");
+		float* bnBias = GetVariablePtr(variableInx );
+		float* bnScale = GetVariablePtr(variableInx + 1);
+		cudnnTensorDescriptor_t descriptor = td_vec[tdInx];
+		cudnnTensorDescriptor_t bnScaleBiasMeanVarDesc = filter_td_vec[variableInx];
 		cudnnDataType_t                    dataType; // image data type
 		int                                n;        // number of inputs (batch size)
 		int                                c;        // number of input feature maps
@@ -275,47 +311,12 @@ public:
 			checkNPP(nppsMeanStdDev_32f(target, w * h, &pMeanStd[i], &pMeanStd[c + i], pMeanStdBuffer));
 		}
 
-		Std2Var << <1, c >> >(pMeanStd + c);
-		cudnnBatchNormalizationForwardInference(cudnnHandle, CUDNN_BATCHNORM_SPATIAL, &alpha, &beta, descriptor,
-			src, descriptor, dst, filterD, bnScale, bnBias, pMeanStd, pMeanStd + c, 0.0001);
-	}
+		float * estimatedMean = pMeanStd;
+		float * estimatedVariance = pMeanStd + c;
+		Std2Var << <1, c >> >(estimatedVariance);
+		cudnnBatchNormalizationForwardInference(cudnnHandle, CUDNN_BATCHNORM_SPATIAL, &alpha, &zero, descriptor,
+			src, descriptor, dst, bnScaleBiasMeanVarDesc, bnScale, bnBias, estimatedMean, estimatedVariance, 0.01);
 
-	void Log(char* layer)
-	{
-		printf("[Log] %s\t(%d, %d)\n", layer, tdInx, variableInx);
-		PrintDescriptor(tdInx, td_vec[tdInx]);
-	}
-
-	void Bias(float* dst)
-	{
-		Log("Bias In");
-
-		cudnnTensorDescriptor_t biasDesc = filter_td_vec[variableInx];
-		cudnnTensorDescriptor_t tensorDesc = td_vec[tdInx];
-		float * bias = GetVariablePtr(variableInx);
-		checkCUDA(cudnnAddTensor(cudnnHandle, &alpha, biasDesc, bias, &alpha, tensorDesc, dst));
-		tdInx++;
-		variableInx++;
-		Log("Bias Out");
-	}
-
-	void Conv(float* src, float* dst)
-	{
-		Log("convIn");
-
-		checkCUDA(cudnnConvolutionForward(cudnnHandle, &alpha, td_vec[tdInx], src,
-			filterDescriptor_vec[variableInx], GetVariablePtr(variableInx), convDesc, algo, workSpace, sizeInBytes, &beta, td_vec[tdInx + 1], dst));
-		tdInx++;
-		variableInx++;
-		Log("conv Out");
-	}
-
-	void BatchNormalize(float* src, float* dst)
-	{
-		Log("BN In");
-		float* bnBias = GetVariablePtr(variableInx);
-		float* bnScale = GetVariablePtr(variableInx + 1);
-		BatchNornalize(src, dst, td_vec[tdInx], filter_td_vec[variableInx], bnScale, bnBias);
 		tdInx++;
 		variableInx += 2;
 		Log("BN Out");
@@ -328,22 +329,22 @@ public:
 	}
 
 	void Activate(float* src, float* dst)
-	{
+	{		
 		checkCUDA(cudnnActivationForward(cudnnHandle, actDesc, &alpha, td_vec[tdInx], src, &beta, td_vec[tdInx + 1], dst));
 		tdInx++;
 		Log("Acti");
 	}
 
 	void Pool()
-	{
+	{		
 		checkCUDA(cudnnPoolingForward(cudnnHandle, maxPoolDesc, &alpha, td_vec[tdInx], buffer2_d, &zero, td_vec[tdInx + 1], buffer1_d));
 		tdInx++;
 		Log("Pool");
 	}
 
 	void UnPool(float* src, float* dst)
-	{
-		Resize(src, td_vec[tdInx], dst, td_vec[tdInx + 1]);
+	{		
+		Resize(src, td_vec[tdInx], dst, td_vec[tdInx+1]);
 		tdInx++;
 		Log("UnPool");
 	}
@@ -358,125 +359,32 @@ public:
 	void inference()
 	{
 		if (isDebug) printf("Network inference() \n");
-		tdInx = variableInx = 0;
-
-		NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
-		//0. CBN R
-		ConvBN(buffer1_d, buffer2_d);
-		checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
-		Activate(buffer2_d, buffer2_d);
-
-		//1. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature0, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-
-		//2. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature1, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-
-		//3. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature2, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-
-		//4. P CBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-		checkCUDA(cudaMemcpy(feature3, buffer2_d, sizeof(float)*GetTensorSize(td_vec[tdInx]), cudaMemcpyDeviceToDevice));
-
-		//5. PCBN R
-		Pool();
-		ConvBN(buffer1_d, buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-
-		//6. C BN
-		ConvBN(buffer2_d, buffer1_d);
-		//7. U A R C BN R
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature3, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//8 C B
-		ConvBN(buffer2_d, buffer1_d);
-
-		//9 U A R C B
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature2, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-
-		//10 U A R C B
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature1, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d, buffer1_d);
-
-		//11 U A R 
-		UnPool(buffer1_d, buffer2_d);
-		Add(feature0, buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//12 C B R		
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		//13 C B R		
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-		//14 C B R
-		ConvBN(buffer2_d, buffer1_d);
-		Activate(buffer1_d, buffer2_d);
-
-		//15 U
-		//UnPool(buffer2_d, outData_d);
-
-		if (td_vec.size() != tdInx + 1)
-		{
-			printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);
-		}
-		if (filter_td_vec.size() != variableInx){
-			printf("[Warn] filter?  %d != %d\n", filter_td_vec.size(), variableInx);
-		}
-
-		printf("[INFO] Inference finished\n");
-	}
-
-	void inference_test()
-	{
-		if (isDebug) printf("Network inference() \n");
-		tdInx = variableInx = 0;
+		tdInx = variableInx = 0;		
 		//mean/std : -26.7, 612
-
+				
 		NormalizeInput(inData_d, buffer2_d, -26.7f, 612);
-		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
 		//0. P CBN R
 		Pool();
 		Conv(buffer1_d, buffer2_d);
-		Bias(buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-
+		BatchNormalize(buffer2_d, buffer1_d);
+		Activate(buffer1_d, buffer2_d);
+		
 		//1. P CBN R
 		Pool();
 		Conv(buffer1_d, buffer2_d);
-		Bias(buffer2_d);
-		Activate(buffer2_d, buffer2_d);
-
+		BatchNormalize(buffer2_d, buffer1_d);
+		Activate(buffer1_d, buffer2_d);
+				
 		//2. P CBN R
 		Pool();
 		Conv(buffer1_d, buffer2_d);
-		Bias(buffer2_d);
-		Activate(buffer2_d, buffer2_d);
+		BatchNormalize(buffer2_d, buffer1_d);
+		Activate(buffer1_d, buffer2_d);
+		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
 
 		//3 U
 		Resize(buffer2_d, td_vec[tdInx], outData_d, td_vec[0]);
-
+		
 		if (td_vec.size() != tdInx + 1)
 		{
 			printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);
@@ -484,7 +392,7 @@ public:
 		if (filter_td_vec.size() != variableInx){
 			printf("[Warn] filter?  %d != %d\n", filter_td_vec.size(), variableInx);
 		}
-
+		
 		printf("Inference finished\n");
 	}
 
@@ -499,10 +407,11 @@ public:
 		int                                cStride;
 		int                                hStride;
 		int                                wStride;
-
+		
 		checkCUDA(cudnnGetTensor4dDescriptor(td_vec[td_vec.size() - 1], &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
 		if (isDebug) printf("GetInference() %d x %d x %d x %d \n", n, c, h, w);
 		ArgMax << <h, w >> >((uchar*)dst, outData_d);
+		//softMax2Uchar << <h, w >> >((uchar*)dst, outData_d, 1);
 	}
 
 	void TestCopyInput()
@@ -510,10 +419,10 @@ public:
 		int size = GetTensorSize(td_vec[td_vec.size() - 1]);
 		checkCUDA(cudaMemcpy(testBuffer_h, buffer1_d, size*sizeof(float), cudaMemcpyDeviceToHost));
 		printf("TestCopyInput\n");
-		for (int i = 0; i < size / 10; i++)
+		for (int i = 0; i < size/10; i++)
 		{
 			if (testBuffer_h[i] > 0.1)
-				printf("%d %f\n", i, testBuffer_h[i]);
+				printf("%d %f\n", i,testBuffer_h[i]);
 		}
 	}
 
@@ -529,7 +438,7 @@ public:
 		int                                hStride;
 		int                                wStride;
 
-		checkCUDA(cudnnGetTensor4dDescriptor(td_vec[0], &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
+		checkCUDA(cudnnGetTensor4dDescriptor(td_vec[0], &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));				
 		checkCUDA(cudaMemcpy(inData_d, src, c*w*h*sizeof(float), cudaMemcpyDeviceToDevice));
 	}
 
@@ -553,7 +462,7 @@ public:
 		}
 	}
 
-	void NormalizeInput(float* src, float* dst, float mean, float std)
+	void NormalizeInput(float* src, float* dst,float mean, float std)
 	{
 		cudnnTensorDescriptor_t descriptor = td_vec[0];
 		cudnnDataType_t                    dataType; // image data type
@@ -566,10 +475,7 @@ public:
 		int                                hStride;
 		int                                wStride;
 		checkCUDA(cudnnGetTensor4dDescriptor(descriptor, &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
-
-		math_std_normal << <dim3(c, h), w >> >(dst, src, mean, std);
+		
+		math_std_normal << <dim3(c,h), w >> >(dst,src, mean, std);
 	}
 };
-
-
-	

@@ -66,11 +66,11 @@ void print(char* title, float* src, int count, int c, int h, int w)
 	printf("%s, NCHW %d/%d/%d/%d \n", title, count, c, h, w);
 	for (int n = 0; n < count; n++)
 	{
-		for (int i = 0; i < c; i++)
+		for (int i = 0; i < c; i++) 
 		{
-			for (int y = 0; y < h; y++)
+			for (int y = 0; y < h; y++) 
 			{
-				for (int x = 0; x < w; x++)
+				for (int x = 0; x < w; x++) 
 				{
 					int index = n * c * h * w + i * h * w + y * w + x;
 					printf("%.1f ", src[index]);
@@ -98,7 +98,7 @@ void print(char* title, float* src, int filter_num, int h, int w)
 }
 
 
-float printBuffer[256 * 256 * 3];
+float printBuffer[256*256*3];
 
 void PrintTensor(char* title, float* tensor, cudnnTensorDescriptor_t descriptor)
 {
@@ -157,7 +157,7 @@ int GetFilterSize(cudnnFilterDescriptor_t filterDesc)
 	int                                w;        // width of input section
 	cudnnGetFilter4dDescriptor(filterDesc, &dataType, &format, &k, &c, &h, &w);
 	printf("GetFilterSize()  %d x %d x %d x %d \n", k, c, h, w);
-	return k* c* h* w;
+	return k* c* h* w;		
 }
 
 void Resize(float* src, cudnnTensorDescriptor_t srcDesc, float* dst, cudnnTensorDescriptor_t dstDesc)
@@ -212,12 +212,12 @@ void Print(vector<cudnnTensorDescriptor_t> tensorDescriptor_vec){
 	}
 }
 
-__global__ void softMax2Uchar(uchar* dst, float* src, int channel)
+__global__ void softMax2Uchar(uchar* dst, float* src,int channel)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int offset = gridDim.x * blockDim.x * channel;
 
-	dst[idx] = src[idx + offset] * 255;
+	dst[idx] = src[idx + offset]*255;
 }
 
 __global__ void ArgMax(uchar* dst, float* src)
@@ -228,7 +228,7 @@ __global__ void ArgMax(uchar* dst, float* src)
 	uchar v = 0;
 	if (src[idx + offset] > src[idx]) v = 255;
 	dst[idx] = v;
-	dst[idx] = src[idx + offset] * 255;
+	//dst[idx] = src[idx + offset] * 255;
 }
 
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)
@@ -243,13 +243,14 @@ __global__ void math_std_normal(float* dst, float* src, float *meanStdArray)
 	float mean = meanStdArray[0];
 	float deviation = meanStdArray[1];
 
-	dst[index] = (src[index] - mean) / (deviation + 0.001f);
+	dst[index] = (src[index] - mean) / (deviation+0.001f);
 }
 
 __global__ void math_std_normal(float* dst, float* src, float mean, float deviation)
-{
+{	
 	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
-	dst[index] = (src[index] - mean) / (deviation + 0.001f);
+	//dst[index] = (src[index] - mean) / (deviation + 0.001f);
+	dst[index] = src[index] / (deviation + 0.001f);
 }
 
 __global__ void Std2Var(float* dst)
