@@ -170,7 +170,7 @@ void SaveImageFile(char *path, uchar* image, int width, int height)
 }
 
 void ImageSave(float* src, int width, int height, char* path) {
-		
+
 	uchar * normaled = new uchar[width*height];
 
 	for (int i = 0; i < width*height; i++)

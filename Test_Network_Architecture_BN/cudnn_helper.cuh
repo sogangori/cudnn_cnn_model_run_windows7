@@ -251,11 +251,11 @@ __global__ void Std2Var(float* dst)
 	dst[idx] = dst[idx] * dst[idx];
 }
 
-__global__ void batchNormal(float* dst, float* src, float *mean, float *var, float* gamma, float*betta)
+__global__ void batchNormal(float* src, float* dst, float *mean, float *var, float* bnScale, float*bnBias, float epsilon)
 {
 	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
 	int c = blockIdx.x;	
-	dst[index] = gamma[c] * (src[index] - mean[c]) / sqrt(var[c] + 0.001f) + betta[c];
+	dst[index] = bnScale[c] * (src[index] - mean[c]) / sqrt(epsilon + var[c]) + bnBias[c];
 	//y[i] = bnScale[k] * (x[i] - estimatedMean[k]) / sqrt(epsilon + estimatedVariance[k]) + bnBias[k]
 }
 
