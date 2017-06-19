@@ -429,6 +429,7 @@ public:
 
 		//6. C BN
 		ConvBN(buffer2_d);
+
 		//7. U A R 
 		UnPool(buffer2_d, buffer1_d);
 		Add(feature3, buffer1_d, buffer2_d);
@@ -449,13 +450,13 @@ public:
 
 		//10 U A R C B
 		UnPool(buffer2_d, buffer1_d);
-		Add(feature2, buffer1_d, buffer2_d);
+		Add(feature1, buffer1_d, buffer2_d);
 		Activate(buffer2_d);
 		ConvBN(buffer2_d);
 
 		//11 U A R 
 		UnPool(buffer2_d, buffer1_d);
-		Add(feature2, buffer1_d, buffer2_d);
+		Add(feature0, buffer1_d, buffer2_d);
 		Activate(buffer2_d);
 
 		//12 C B R		
@@ -480,40 +481,6 @@ public:
 		}
 
 		printf("[INFO] Inference finished\n");
-	}
-
-	void inference2()
-	{
-		if (isDebug) printf("Network inference() \n");
-		tdInx = variableInx = 0;
-
-		NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
-		//0. CBN R
-		ConvBN(buffer1_d);
-		Activate(buffer1_d);
-
-		//1. P CBN R
-		Pool(buffer1_d, buffer2_d);
-		ConvBN(buffer2_d);
-		Activate(buffer2_d);
-
-		//2. P CBN R
-		Pool(buffer2_d, buffer1_d);
-		ConvBN(buffer1_d);
-		Activate(buffer1_d);
-		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));		
-		//3 U
-		Resize(buffer1_d, td_vec[tdInx], outData_d, td_vec[0]);
-
-		if (td_vec.size() != tdInx + 1)
-		{
-			printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);
-		}
-		if (filter_td_vec.size() != variableInx){
-			printf("[Warn] filter?  %d != %d\n", filter_td_vec.size(), variableInx);
-		}
-
-		printf("Inference finished\n");
 	}
 
 	void GetInference(void* dst)

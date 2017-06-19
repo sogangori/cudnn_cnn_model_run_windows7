@@ -73,7 +73,7 @@ void write(float* src, char* path, int length)
 
 int main()
 {
-	char * variablePath = "c:/ultrasound/filter/network/variable_small_bn.txt";
+	char * variablePath = "c:/ultrasound/filter/network/variable.txt";
 	char * variablePath2 = "../weights/weight_small_bn.dat";
 	variable_reader variable_read = variable_reader(variablePath);
 

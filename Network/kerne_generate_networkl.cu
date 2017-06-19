@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/weights/weight.dat";
-	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_00.dat";
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_03.dat";
 	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_10.dat";
 
 	int mask_len = in_w * in_h;
