@@ -194,7 +194,6 @@ public:
 			
 			checkCUDA(cudnnSetTensor4dDescriptor(filterTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, k, c, h, w));
 			checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, k, c, h, w));
-			//checkCUDA(cudnnSetFilter4dDescriptor(filterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NHWC, k, c, h, w));
 			
 			filterDescriptor_vec.push_back(filterDesc);
 			filter_td_vec.push_back(filterTensorDesc);
@@ -364,7 +363,6 @@ public:
 		//mean/std : -26.7, 612
 				
 		NormalizeInput(inData_d, buffer2_d, -26.7f, 612);
-		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
 		//0. P CBN R
 		Pool();
 		Conv(buffer1_d, buffer2_d);
@@ -383,6 +381,7 @@ public:
 		Bias(buffer2_d);
 		Activate(buffer2_d, buffer2_d);					
 
+		//checkCUDA(cudaMemcpy(outData_d, buffer2_d, GetTensorSize(td_vec[td_vec.size() - 1])*sizeof(float), cudaMemcpyDeviceToDevice));
 		//3 U
 		Resize(buffer2_d, td_vec[tdInx], outData_d, td_vec[0]);
 		

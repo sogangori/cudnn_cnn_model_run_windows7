@@ -41,8 +41,10 @@ void checkCPU(int status)
 
 void checkCUDNN(cudnnStatus_t  status)
 {
-	if (status != CUDA_SUCCESS)
-		cout << "[ERROR] CUDA " << status << endl << endl;;
+	if (status != CUDA_SUCCESS){
+		cout << "[ERROR] CUDNN (" << status << ") " << cudnnGetErrorString(status) << endl << endl;;		
+		exit(1);
+	}
 }
 
 void checkCUDA(cudnnStatus_t status)
@@ -59,6 +61,7 @@ void checkCUDA(cudaError_t error)
 void checkNPP(NppStatus  error) {
 	if (error != NPP_SUCCESS)
 		cout << "[ERROR] NPP " << error << endl;
+	
 }
 
 void print(char* title, float* src, int count, int c, int h, int w)
@@ -156,7 +159,7 @@ int GetFilterSize(cudnnFilterDescriptor_t filterDesc)
 	int                                h;        // height of input section
 	int                                w;        // width of input section
 	cudnnGetFilter4dDescriptor(filterDesc, &dataType, &format, &k, &c, &h, &w);
-	printf("GetFilterSize()  %d x %d x %d x %d \n", k, c, h, w);
+	//printf("GetFilterSize()  %d x %d x %d x %d \n", k, c, h, w);
 	return k* c* h* w;		
 }
 
@@ -179,7 +182,7 @@ void Resize(float* src, cudnnTensorDescriptor_t srcDesc, float* dst, cudnnTensor
 
 	double nXFactor = 1.0 * dstW / (double)w;
 	double nYFactor = 1.0 * dstH / (double)h;
-	//printf("Resize %d/%d/%d -> %d/%d/%d\, nFactor=%.2f/%.2f \n", c, w, h, dstC, dstW, dstH, nXFactor, nYFactor);
+	printf("Resize %d/%d/%d -> %d/%d/%d\, nFactor=%.2f/%.2f \n", c, w, h, dstC, dstW, dstH, nXFactor, nYFactor);
 
 	for (int i = 0; i < c; i++)
 	{
@@ -190,7 +193,7 @@ void Resize(float* src, cudnnTensorDescriptor_t srcDesc, float* dst, cudnnTensor
 		NppiRect oSrcROI = { 0, 0, w, h };
 		NppiRect oDstROI = { 0, 0, dstW, dstH };
 
-		nppiResize_32f_C1R(&src[src_offset], oSrcSize, oSrcSize.width*sizeof(float), oSrcROI, &dst[dst_offset], oDstSize.width*sizeof(float), oDstSize, nXFactor, nYFactor, NPPI_INTER_LINEAR);
+		nppiResize_32f_C1R(&src[src_offset], oSrcSize, oSrcSize.width*sizeof(float), oSrcROI, &dst[dst_offset], oDstSize.width*sizeof(float), oDstSize, nXFactor, nYFactor, NPPI_INTER_LINEAR);//NPPI_INTER_NN,NPPI_INTER_LINEAR
 	}
 }
 
@@ -220,17 +223,6 @@ __global__ void softMax2Uchar(uchar* dst, float* src,int channel)
 	dst[idx] = src[idx + offset]*255;
 }
 
-__global__ void ArgMax(uchar* dst, float* src)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	int offset = gridDim.x * blockDim.x;
-
-	uchar v = 0;
-	if (src[idx + offset] > src[idx]) v = 255;
-	dst[idx] = v;
-	//dst[idx] = src[idx + offset] * 255;
-}
-
 __global__ void ConvertFloat2uchar(uchar* dst, float* src, int srcOffset)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -257,4 +249,26 @@ __global__ void Std2Var(float* dst)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	dst[idx] = dst[idx] * dst[idx];
+}
+
+__global__ void batchNormal(float* dst, float* src, float *mean, float *var, float* gamma, float*betta)
+{
+	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
+	int c = blockIdx.x;	
+	dst[index] = gamma[c] * (src[index] - mean[c]) / sqrt(var[c] + 0.001f) + betta[c];
+	//y[i] = bnScale[k] * (x[i] - estimatedMean[k]) / sqrt(epsilon + estimatedVariance[k]) + bnBias[k]
+}
+
+__global__ void ArgMax(uchar* dst, float* src)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int offset = gridDim.x * blockDim.x;
+
+	uchar v = 0;
+	if (src[idx + offset] > src[idx]) v = 255;
+	dst[idx] = v;
+
+	//float v0 = src[idx + offset] * 20;
+	//if (v0 > 255) v0 = 255;
+	//dst[idx] = v0;
 }
