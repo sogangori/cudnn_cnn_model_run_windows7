@@ -182,7 +182,7 @@ void Resize(float* src, cudnnTensorDescriptor_t srcDesc, float* dst, cudnnTensor
 
 	double nXFactor = 1.0 * dstW / (double)w;
 	double nYFactor = 1.0 * dstH / (double)h;
-	printf("Resize %d/%d/%d -> %d/%d/%d\, nFactor=%.2f/%.2f \n", c, w, h, dstC, dstW, dstH, nXFactor, nYFactor);
+	//printf("Resize %d/%d/%d -> %d/%d/%d\, nFactor=%.2f/%.2f \n", c, w, h, dstC, dstW, dstH, nXFactor, nYFactor);
 
 	for (int i = 0; i < c; i++)
 	{

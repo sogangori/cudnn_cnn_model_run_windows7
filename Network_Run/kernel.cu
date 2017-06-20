@@ -161,9 +161,10 @@ void SaveImageFile(char *path, uchar* image, int width, int height)
 
 int ReadInput(float* dst, int len, int offset, int index)
 {
-	char * folder = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9";
+	char * folder = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das_12_float";
 	
 	char * file = "das_301_03.dat";
+	if (index == 1) file = "das_301_11.dat";
 	char path[150];
 	sprintf(path, "%s/%s", folder, file);
 	printf("path : %s\n", path);
@@ -175,7 +176,7 @@ using funcWork = int(*)(int, void*);
 
 int main()
 {
-	auto dll = LoadLibrary(TEXT("c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/x64/Debug/Network.dll"));
+	auto dll = LoadLibrary(TEXT("c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/x64/Release/Network.dll"));
 	if (dll == nullptr) {
 		puts("로드 실패");
 		exit(0);
@@ -210,21 +211,16 @@ int main()
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	float elapsed_time_ms = 0.0f;
-	float elapsed_time_mean_ms = 0.0f;
-		
-	int result = ReadInput(inData, c * w * h, w * h, 3);
-	printf("File Read Result: %d\n", result);		
-	cudaMemcpy(inData_d, inData, c*w*h*sizeof(float), cudaMemcpyHostToDevice);
-	error = externWork(3, inData_d);
-
-	cudaEventRecord(start);
+	float elapsed_time_mean_ms = 0.0f;		
 	
-	cudaEventRecord(stop);
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&elapsed_time_ms, start, stop);
 	int iter = 2;
 	for (int i = 0; i < iter; i++)
 	{
+		int result = ReadInput(inData, c * w * h, w * h, i);
+		printf("File Read Result: %d\n", result);		
+		cudaMemcpy(inData_d, inData, c*w*h*sizeof(float), cudaMemcpyHostToDevice);
+		error = externWork(3, inData_d);
+		cudaEventRecord(start);
 		if (i > 0) elapsed_time_mean_ms += elapsed_time_ms;
 		printf("[%d] inference() %.2f ms \n", i, elapsed_time_ms);
 		externWork(4, outData_d);
@@ -233,6 +229,9 @@ int main()
 		sprintf(path, "predict_%d.bmp", i);
 		SaveImageFile(path, outData, w, h);
 	
+		cudaEventRecord(stop);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsed_time_ms, start, stop);
 		printf("mean %.2f ms \n", elapsed_time_mean_ms / (iter - 1));
 		externWork(5, inData_d);
 	}

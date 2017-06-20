@@ -8,7 +8,7 @@
 
 class Network{
 private:
-	bool isDebug = true;
+	bool isDebug = !true;
 	float alpha = 1.0f;
 	float zero = 0;
 	double epsilon = 0.001;
@@ -127,7 +127,7 @@ private:
 		cudnnTensorDescriptor_t inputTensorDesc = td_vec[tdInx];
 		cudnnTensorDescriptor_t outputTensorDesc = td_vec[tdInx + 1];
 		checkCUDA(cudnnGetConvolution2dForwardOutputDim(convDesc, inputTensorDesc, filterDescriptor_vec[variableInx], &out_n, &out_c, &out_h, &out_w));
-		printf("OutDim Conv %d x %d x %d x %d \n", out_n, out_c, out_h, out_w);
+		if(isDebug) printf("OutDim Conv %d x %d x %d x %d \n", out_n, out_c, out_h, out_w);
 
 		checkCUDNN(cudnnConvolutionForward(cudnnHandle, &alpha, inputTensorDesc, src,
 			filterDescriptor_vec[variableInx], GetVariablePtr(variableInx), convDesc, algo, workSpace, sizeInBytes, &zero, outputTensorDesc, dst));
@@ -156,7 +156,7 @@ private:
 		for (int i = 0; i < c; i++)
 		{
 			float* target = src + w*h*i;
-			checkNPP(nppsMeanStdDev_32f(target, w * h, &pMeanStd[i], &pMeanStd[c + i], pMeanStdBuffer));
+			checkNPP(nppsMeanStdDev_32f(target, w * h, pMeanStd + i, pMeanStd + c + i, pMeanStdBuffer));
 		}
 
 		float * estimatedMean = pMeanStd;
@@ -193,7 +193,7 @@ private:
 	{
 		int out_n, out_c, out_h, out_w;
 		checkCUDA(cudnnGetPooling2dForwardOutputDim(maxPoolDesc, td_vec[tdInx], &out_n, &out_c, &out_h, &out_w));
-		printf("Predict Pool Result %d/%d/%d/%d\n", out_n, out_c, out_h, out_w);
+		if(isDebug) printf("Predict Pool Result %d/%d/%d/%d\n", out_n, out_c, out_h, out_w);
 		checkCUDA(cudnnPoolingForward(cudnnHandle, maxPoolDesc, &alpha, td_vec[tdInx], src, &zero, td_vec[tdInx + 1], dst));
 		tdInx++;
 		Log("Pool");
@@ -394,7 +394,8 @@ public:
 		if (isDebug) printf("Network inference() \n");
 		tdInx = variableInx = 0;
 
-		NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
+		//NormalizeInput(inData_d, buffer1_d, -26.7f, 612);
+		NormalizeInput(inData_d, buffer1_d, -28.2f, 519.6f );
 		
 		//0. CBN R
 		ConvBN_Activate(buffer1_d);
@@ -453,8 +454,8 @@ public:
 		//15 U
 		UnPool(buffer2_d, outData_d);
 
-		if (td_vec.size() != tdInx + 1) printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);		
-		if (filter_td_vec.size() != variableInx) printf("[Warn] filter?  %d != %d\n", filter_td_vec.size(), variableInx);		
+		if (isDebug && (td_vec.size() != tdInx + 1)) printf("[Warn] Operation?  %d != %d\n", td_vec.size(), tdInx + 1);
+		if (isDebug && (filter_td_vec.size() != variableInx)) printf("[Warn] filter?  %d != %d\n", filter_td_vec.size(), variableInx);
 
 		if(isDebug) printf("[INFO] Inference finished\n");
 	}
@@ -537,6 +538,15 @@ extern "C" {
 	};
 	char * variablePath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/weights/weight_trimap.dat";
 	
+	DllExport int externSet(int what, int v){
+		switch (what){
+		case 0: in_c = v; break;
+		case 1: in_h = v; break;
+		case 2: in_w = v; break;
+		default: break;			
+		}
+		return 0;
+	}
 	DllExport int externWork(int what, void* csArray)
 	{
 		printf("externWork(%d)\n", what);
