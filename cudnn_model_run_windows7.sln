@@ -26,6 +26,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network", "Network\Network.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Network_Architecture_BN", "Test_Network_Architecture_BN\Test_Network_Architecture_BN.vcxproj", "{5AE92DD5-F8E7-4787-881F-9BF04923DD76}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network_Run", "Network_Run\Network_Run.vcxproj", "{2AF3E52E-228D-488D-B1F4-F30922257027}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -139,6 +141,18 @@ Global
 		{5AE92DD5-F8E7-4787-881F-9BF04923DD76}.Release|Win32.Build.0 = Release|Win32
 		{5AE92DD5-F8E7-4787-881F-9BF04923DD76}.Release|x64.ActiveCfg = Release|x64
 		{5AE92DD5-F8E7-4787-881F-9BF04923DD76}.Release|x64.Build.0 = Release|x64
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|Win32.Build.0 = Debug|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|x64.ActiveCfg = Debug|x64
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Debug|x64.Build.0 = Debug|x64
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|Win32.ActiveCfg = Release|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|Win32.Build.0 = Release|Win32
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|x64.ActiveCfg = Release|x64
+		{2AF3E52E-228D-488D-B1F4-F30922257027}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
