@@ -158,19 +158,18 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/weights/weight_trimap.dat";
-	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_06.dat";
-	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_10.dat";
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_07.dat";
+	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
 
 	int mask_len = in_w * in_h;
 	int input_len = in_c * mask_len;
-	int data_len = input_len + mask_len;
-	float* input = new float[data_len];
+	
+	float* input = new float[input_len];
 	float* input_d;
 	uchar * mask = new uchar[mask_len];
 	uchar * mask_d;
 	cudaMalloc(&input_d, input_len * sizeof(float));
 	cudaMalloc(&mask_d, in_w*in_h);
-
 
 	FILE *inf = fopen(dataPath, "rb");
 	if (inf == NULL) {
@@ -178,15 +177,16 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	size_t t = fread(input, sizeof(float), data_len, inf);
+	fseek(inf, sizeof(float)*mask_len*280, SEEK_SET);
+	size_t t = fread(input, sizeof(float), input_len, inf);
 	fclose(inf);
 	printf("Read %d\n", t);
-	if (t != data_len)  printf("[WARN] read count (%d) != (%d) \n", t, data_len);
+	if (t != input_len)  printf("[WARN] read count (%d) != (%d) \n", t, input_len);
 
 	if (in_w<10)
-	for (int i = 0; i < data_len; i++) input[i] = 1;
+	for (int i = 0; i < input_len; i++) input[i] = 1;
 
-	cudaMemcpy(input_d, input + mask_len, input_len * sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(input_d, input, input_len * sizeof(float), cudaMemcpyHostToDevice);
 
 	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
 	//network.InitFilterDesc();

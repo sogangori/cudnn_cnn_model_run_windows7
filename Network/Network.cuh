@@ -307,7 +307,7 @@ public:
 		cudnnTensorDescriptor_t inputTensorDesc = td_vec[tdInx];
 		cudnnTensorDescriptor_t outputTensorDesc = td_vec[tdInx + 1];
 		checkCUDA(cudnnGetConvolution2dForwardOutputDim(convDesc, inputTensorDesc, filterDescriptor_vec[variableInx], &out_n, &out_c, &out_h, &out_w));
-		printf("OutDim Conv %d x %d x %d x %d ,sizeInBytes: %d\n", out_n, out_c, out_h, out_w, sizeInBytes);
+		printf("OutDim Conv %d x %d x %d x %d \n", out_n, out_c, out_h, out_w);
 
 		checkCUDNN(cudnnConvolutionForward(cudnnHandle, &alpha, inputTensorDesc, src,
 			filterDescriptor_vec[variableInx], GetVariablePtr(variableInx), convDesc, algo, workSpace, sizeInBytes, &zero, outputTensorDesc, dst));
@@ -520,7 +520,7 @@ public:
 		int                                wStride;
 		checkCUDA(cudnnGetTensor4dDescriptor(descriptor, &dataType, &n, &c, &h, &w, &nStride, &cStride, &hStride, &wStride));
 
-		math_std_normal << <dim3(c, h), w >> >(dst, src, mean, std);
+		math_std_normal << <dim3(c, h), w >> >(dst, src, mean, std,epsilon);
 	}
 };
 

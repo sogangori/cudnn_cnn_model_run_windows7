@@ -238,11 +238,11 @@ __global__ void math_std_normal(float* dst, float* src, float *meanStdArray)
 	dst[index] = (src[index] - mean) / (deviation + 0.001f);
 }
 
-__global__ void math_std_normal(float* dst, float* src, float mean, float deviation)
+__global__ void math_std_normal(float* dst, float* src, float mean, float deviation, float epsilon)
 {
 	int index = blockIdx.x  * gridDim.y* blockDim.x + blockIdx.y * blockDim.x + threadIdx.x;
 	//dst[index] = (src[index] - mean) / (deviation + 0.001f);
-	dst[index] = src[index] / (deviation + 0.001f);
+	dst[index] = src[index] / (deviation + epsilon);
 }
 
 __global__ void Std2Var(float* dst)
@@ -267,10 +267,6 @@ __global__ void ArgMax(uchar* dst, float* src)
 	uchar v = 0;
 	if (src[idx + offset] > src[idx]) v = 255;
 	dst[idx] = v;
-
-	//float v0 = src[idx + offset] * 20;
-	//if (v0 > 255) v0 = 255;
-	//dst[idx] = v0;
 }
 
 __global__ void GetKnownIndex(uchar* dst, float* src, int channel)
@@ -280,8 +276,9 @@ __global__ void GetKnownIndex(uchar* dst, float* src, int channel)
 	int wh = gridDim.x * blockDim.x;
 	int idx0 = idx + wh * 0;
 	int idx1 = idx + wh * 1;
-	int Idx2 = idx + wh * 2;
+	int idx2 = idx + wh * 2;
 	uchar v = 255;
-	if ((src[idx0] > src[idx1]) && (src[idx0] > src[Idx2])) v = 0;
+	if ((src[idx0] > src[idx1]) && (src[idx0] > src[idx2])) v = 0;
+	//if ((src[idx2] > src[idx0]) && (src[idx2] > src[idx1])) v = 0;
 	dst[idx] = v;
 }
