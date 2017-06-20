@@ -181,3 +181,41 @@ void ImageSave(float* src, int width, int height, char* path) {
 	SaveImageFile(path, normaled, width, height);
 	delete[] normaled;
 }
+
+void RotateFilterHWCN2NCHW(float*src, float*dst, int* filterShapePtr, int filterCount)
+{
+	//필터 돌리자 HWCN -> NCHW
+	int v_offset = 0;
+	for (int i = 0; i < filterCount; i++)
+	{
+		int offset = i * 4;
+		int height = filterShapePtr[offset + 0];
+		int width = filterShapePtr[offset + 1];
+		int channel = filterShapePtr[offset + 2];
+		int kcount = filterShapePtr[offset + 3];
+		for (int h = 0; h < height; h++)
+		{
+			for (int w = 0; w < width; w++)
+			{
+				for (int c = 0; c < channel; c++)
+				{
+					for (int k = 0; k < kcount; k++)
+					{
+						int index_in = v_offset
+							+ (h * width * channel * kcount)
+							+ (w * channel * kcount)
+							+ (c * kcount)
+							+ k;
+						int index_out = v_offset
+							+ k * channel * height * width
+							+ c * height * width
+							+ h * width
+							+ w;
+						dst[index_out] = src[index_in];
+					}
+				}
+			}
+		}
+		v_offset += height*width*channel*kcount;
+	}
+}

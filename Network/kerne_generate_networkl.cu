@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
 	checkCPU(CheckFilterCount(in_h, in_w, in_c));
 
 	char * variablePath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/cudnn_model_run_windows7/weights/weight_trimap.dat";
-	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_07.dat";
+	char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_03.dat";
 	//char * dataPath = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das9/das_301_11.dat";
 
 	int mask_len = in_w * in_h;
@@ -188,8 +188,7 @@ int main(int argc, char* argv[])
 
 	cudaMemcpy(input_d, input, input_len * sizeof(float), cudaMemcpyHostToDevice);
 
-	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));
-	//network.InitFilterDesc();
+	network.LoadWeight(variablePath, &filterShape[0][0], sizeof(filterShape) / sizeof(int));	
 	network.CreateTensorDescriptor(NetLayer, sizeof(NetLayer), in_h, in_w, in_c);
 	network.Init(in_h, in_w, in_c);
 	network.CopyInput(input_d);
