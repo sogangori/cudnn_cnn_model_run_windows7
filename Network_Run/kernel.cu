@@ -161,7 +161,7 @@ void SaveImageFile(char *path, uchar* image, int width, int height)
 
 int ReadInput(float* dst, int len, int offset, int index)
 {
-	char * folder = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das_12_float";
+	char * folder = "c:/Users/pc/Documents/Visual Studio 2013/Projects/DopplerTrainPreProcess/IQApp_cuda/bin/x64/Debug/trainData/das_h416";
 	
 	char * file = "das_301_03.dat";
 	if (index == 1) file = "das_301_11.dat";
@@ -172,6 +172,7 @@ int ReadInput(float* dst, int len, int offset, int index)
 	return ReadBinary(path, dst, len, offset);
 }
 
+using funcSet = int(*)(int, int);
 using funcWork = int(*)(int, void*);
 
 int main()
@@ -184,12 +185,15 @@ int main()
 	else puts("로드 성공");
 		
 	auto externWork = (funcWork)GetProcAddress(dll, "externWork");	
+	auto externSet = (funcSet)GetProcAddress(dll, "externSet");
 	if (externWork == nullptr) printf("[ERROR] null. externWork \n");
 	else printf("[OK] externWork\n");
 
 	int w = 256;
-	int h = 256;
+	int h = 416;
 	int c = 12;
+	externSet(1, h);
+	externSet(2, w);
 	float *inData = new float[c * w * h];	
 	uchar *outData = new uchar[w * h];
 	float *inData_d;
